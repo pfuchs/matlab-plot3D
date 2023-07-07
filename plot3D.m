@@ -24,6 +24,7 @@ arguments
     options.Type (1,1) string {mustBeMember(options.Type, ...
               ["mosaic","square","line","stack","mid3","mip3"])} = "mosaic"
     options.Crop (1,1) logical = true
+    options.Labels (1,1) logical = false
     options.FigHandle (1,1) = 1
     options.caxis = 'auto'
 end
@@ -63,13 +64,40 @@ switch options.Type
     otherwise
         error('No valid image type given.')
 end
+
+%% Plot
 nexttile;
 im = image(imMat, 'CDataMapping', 'scaled'); 
 
 im.AlphaData = mskMat;
 im.Parent.Color = 'none';
 im.Parent.Box = 'off';
- 
+
+
+%% Add labels
+if options.Labels
+sz = size(PlotData);
+pltsz = size(imMat);
+%
+xshift = ceil(pltsz(1)/40);
+yshift = ceil(pltsz(2)/40);
+% axial
+text(xshift,         sz(2)/2,            'R','Color','r','FontWeight','bold')
+text(sz(1) - xshift, sz(2)/2,            'L','Color','r','FontWeight','bold')
+text(sz(1)/2,        yshift,             'A','Color','r','FontWeight','bold')
+text(sz(1)/2,        sz(2)-yshift,       'P','Color','r','FontWeight','bold')
+% coronal
+text(xshift,         sz(3)/2+sz(2),      'R','Color','r','FontWeight','bold')
+text(sz(1) - xshift, sz(3)/2+sz(2),      'L','Color','r','FontWeight','bold')
+text(sz(1)/2,        sz(2)+yshift,       'S','Color','r','FontWeight','bold')
+text(sz(1)/2,        sz(2)+sz(3)-yshift, 'I','Color','r','FontWeight','bold')
+% sagittal
+text(sz(1)+sz(2)-xshift, sz(3)/2+sz(2), 'A','Color','r','FontWeight','bold')
+text(sz(1)+xshift,       sz(3)/2+sz(2), 'P','Color','r','FontWeight','bold')
+text(sz(2)/2+sz(1),      sz(2)+yshift,       'S','Color','r','FontWeight','bold')
+text(sz(2)/2+sz(1),      sz(2)+sz(3)-yshift, 'I','Color','r','FontWeight','bold')
+end
+
 axis image off;
 colormap(gray);
 if ndims(Data)>3; title(sprintf('Echo %i',tt)); end
