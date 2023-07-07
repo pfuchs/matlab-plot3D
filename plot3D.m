@@ -4,12 +4,13 @@ function im = plot3D(Data,Mask, varargin)
 % midplane orientations depending on the inputs given.
 %
 % Example
-%   [X,Y,Z] = ndgrid(-10:10)
-%   sp = (X.^2 + Y.^2 + (Z+4).^2) < 100;
-%   scaling = magic(size(sp))
-%   im = sp.*scaling;
+%   [X,Y,Z] = ndgrid(-10:10);
+%   R = (X.^2 + Y.^2 + (Z+4).^2);
+%   sp = R < 100;
+%   im = sp.*(rand(size(sp))/5+exp(-R/25));
+%   figure(); subplot(211)
 %   plot3D(im); % plot without masking
-%   figure();
+%   subplot(212);
 %   plot3D(im, sp); % plot with masking
 %
 % see also IMAGE, IMAGESC, REGIONPROPS3, ALPHA, INPUTNAME
