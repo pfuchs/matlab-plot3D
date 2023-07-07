@@ -1,4 +1,4 @@
-function im = plot3D(Data,Mask, varargin)
+function im = plot3D(Data, Mask, options)
 % Plotting function inspired by "im" from Jeff Fesslers MIRT toolbox
 % automatically crops the image domain to the mask and plots mosaic or
 % midplane orientations depending on the inputs given.
@@ -13,31 +13,33 @@ function im = plot3D(Data,Mask, varargin)
 %   subplot(212);
 %   plot3D(im, sp); % plot with masking
 %
-% see also IMAGE, IMAGESC, REGIONPROPS3, ALPHA, INPUTNAME
+% see also IMAGE, IMAGESC, REGIONPROPS3, ALPHA
 
-%% Set defaults
-type = 'mosaic';
-if nargin>2
-    type = varargin{1};
-end
-
-if nargin < 2 || isempty(Mask)
-    Mask = ones(size(Data));
+%% Input validation and defaults
+arguments
+    Data (:,:,:,:) double {mustBeNumeric}
+    Mask (:,:,:,:) double {mustBeNumeric} = ones(size(Data))
+    options.Type (1,1) string = "mosaic"
+    options.Crop (1,1) logical = true
 end
 
 
 %% Preprocessing
-bbox = floor(getfield(regionprops3((Mask ~=0 ),'BoundingBox'),'BoundingBox'));
-bboxIdx = substruct('()',{bbox(2)+(1:bbox(5)), bbox(1)+(1:bbox(4)), bbox(3)+(1:bbox(6))});
-
-Data = subsref(Data, bboxIdx);
-Mask = subsref(Mask, bboxIdx);
+if options.Crop
+    bbox = floor(getfield(regionprops3((Mask ~=0 ),'BoundingBox'),'BoundingBox'));
+    bboxIdx = substruct('()',{bbox(2)+(1:bbox(5)), ...
+                              bbox(1)+(1:bbox(4)), ...
+                              bbox(3)+(1:bbox(6))});
+    
+    Data = subsref(Data, bboxIdx);
+    Mask = subsref(Mask, bboxIdx);
+end
 
 %% Extract image mosaic
-switch type
+switch options.Type
     case {'line','stack','square', 'mid3'}
-        imMat = mid3(Data, type);
-        mskMat = mid3(Mask, type);
+        imMat = mid3(Data, options.Type);
+        mskMat = mid3(Mask, options.Type);
     case {'mosaic'}
         imMat = mosaic(Data);
         mskMat = mosaic(Mask);
@@ -47,7 +49,7 @@ end
 
 im = image(imMat, 'CDataMapping', 'scaled'); 
 
-im.AlphaData = double(mskMat);
+im.AlphaData = mskMat;
 im.Parent.Color = 'none';
 im.Parent.Box = 'off';
  
