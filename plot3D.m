@@ -48,6 +48,9 @@ if options.Crop
                               bbox(1,3)+(1:bbox(1,6)), ...
                               min(tt,size(Mask,4))});
     PlotMask = subsref(Mask, bboxIdx);
+else
+    PlotData = Data(:,:,:,tt);
+    PlotMask = Mask(:,:,:,min(tt,size(Mask,4)));
 end
 
 %% Extract image mosaic
@@ -76,26 +79,48 @@ im.Parent.Box = 'off';
 
 %% Add labels
 if options.Labels
-sz = size(PlotData);
-pltsz = size(imMat);
-%
-xshift = ceil(pltsz(1)/40);
-yshift = ceil(pltsz(2)/40);
-% axial
-text(xshift,         sz(2)/2,            'R','Color','r','FontWeight','bold')
-text(sz(1) - xshift, sz(2)/2,            'L','Color','r','FontWeight','bold')
-text(sz(1)/2,        yshift,             'A','Color','r','FontWeight','bold')
-text(sz(1)/2,        sz(2)-yshift,       'P','Color','r','FontWeight','bold')
-% coronal
-text(xshift,         sz(3)/2+sz(2),      'R','Color','r','FontWeight','bold')
-text(sz(1) - xshift, sz(3)/2+sz(2),      'L','Color','r','FontWeight','bold')
-text(sz(1)/2,        sz(2)+yshift,       'S','Color','r','FontWeight','bold')
-text(sz(1)/2,        sz(2)+sz(3)-yshift, 'I','Color','r','FontWeight','bold')
-% sagittal
-text(sz(1)+sz(2)-xshift, sz(3)/2+sz(2), 'A','Color','r','FontWeight','bold')
-text(sz(1)+xshift,       sz(3)/2+sz(2), 'P','Color','r','FontWeight','bold')
-text(sz(2)/2+sz(1),      sz(2)+yshift,       'S','Color','r','FontWeight','bold')
-text(sz(2)/2+sz(1),      sz(2)+sz(3)-yshift, 'I','Color','r','FontWeight','bold')
+    sz = size(PlotData);
+    pltsz = size(imMat);
+    switch lower(options.Type)
+        case {"square", "mid3"}
+            xshift = ceil(pltsz(1)/40);
+            yshift = ceil(pltsz(2)/40);
+            % axial
+            text(xshift,         sz(2)/2,            'R','Color','r','FontWeight','bold')
+            text(sz(1) - xshift, sz(2)/2,            'L','Color','r','FontWeight','bold')
+            text(sz(1)/2,        yshift,             'A','Color','r','FontWeight','bold')
+            text(sz(1)/2,        sz(2)-yshift,       'P','Color','r','FontWeight','bold')
+            % coronal
+            text(xshift,         sz(3)/2+sz(2),      'R','Color','r','FontWeight','bold')
+            text(sz(1) - xshift, sz(3)/2+sz(2),      'L','Color','r','FontWeight','bold')
+            text(sz(1)/2,        sz(2)+yshift,       'S','Color','r','FontWeight','bold')
+            text(sz(1)/2,        sz(2)+sz(3)-yshift, 'I','Color','r','FontWeight','bold')
+            % sagittal
+            text(sz(1)+sz(2)-xshift, sz(3)/2+sz(2), 'A','Color','r','FontWeight','bold')
+            text(sz(1)+xshift,       sz(3)/2+sz(2), 'P','Color','r','FontWeight','bold')
+            text(sz(2)/2+sz(1),      sz(2)+yshift,       'S','Color','r','FontWeight','bold')
+            text(sz(2)/2+sz(1),      sz(2)+sz(3)-yshift, 'I','Color','r','FontWeight','bold')
+        case {'line'}
+            xshift = ceil(pltsz(1)/40);
+            yshift = ceil(pltsz(2)/60);
+            % axial
+            text(xshift,         sz(2)/2,            'R','Color','r','FontWeight','bold')
+            text(sz(1) - xshift, sz(2)/2,            'L','Color','r','FontWeight','bold')
+            text(sz(1)/2,        yshift,             'A','Color','r','FontWeight','bold')
+            text(sz(1)/2,        sz(2)-yshift,       'P','Color','r','FontWeight','bold')
+            % coronal
+            text(sz(1) + xshift,  sz(2)/2,            'R','Color','r','FontWeight','bold')
+            text(2*sz(1) - xshift,sz(2)/2,            'L','Color','r','FontWeight','bold')
+            text(sz(1)/2 + sz(1), yshift,             'S','Color','r','FontWeight','bold')
+            text(sz(1)/2 + sz(1), sz(2)-yshift,       'I','Color','r','FontWeight','bold')
+            % sagittal
+            text(2*sz(1) + xshift,  sz(2)/2,            'P','Color','r','FontWeight','bold')
+            text(2*sz(1) + sz(2) - xshift,sz(2)/2,      'A','Color','r','FontWeight','bold')
+            text(sz(1)/2 + 2*sz(1), yshift,             'S','Color','r','FontWeight','bold')
+            text(sz(1)/2 + 2*sz(1), sz(2)-yshift,       'I','Color','r','FontWeight','bold')      
+        otherwise
+            warning("Labels have not been defined for this projection (yet).")
+    end
 end
 
 axis image off;
