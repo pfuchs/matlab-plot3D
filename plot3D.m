@@ -34,13 +34,18 @@ tcl = tiledlayout('flow','TileSpacing','compact', 'Padding', 'loose');
 for tt = 1:size(Data,4)
 %% Preprocessing
 if options.Crop
-    bbox = floor(getfield(regionprops3(Mask(:,:,:,tt) ~=0 ,'BoundingBox'),'BoundingBox'));
+    bbox = floor(getfield(regionprops3(Mask(:,:,:,min(tt,size(Mask,4))) ~=0 ,'BoundingBox'),'BoundingBox'));
     bboxIdx = substruct('()',{bbox(1,2)+(1:bbox(1,5)), ...
                               bbox(1,1)+(1:bbox(1,4)), ...
                               bbox(1,3)+(1:bbox(1,6)), ...
                               tt});
     
     PlotData = subsref(Data, bboxIdx);
+    
+    bboxIdx = substruct('()',{bbox(1,2)+(1:bbox(1,5)), ...
+                              bbox(1,1)+(1:bbox(1,4)), ...
+                              bbox(1,3)+(1:bbox(1,6)), ...
+                              min(tt,size(Mask,4))});
     PlotMask = subsref(Mask, bboxIdx);
 end
 
@@ -67,7 +72,7 @@ im.Parent.Box = 'off';
  
 axis image off;
 colormap(gray);
-title(sprintf('Echo %i',tt));
+if ndims(Data)>3; title(sprintf('Echo %i',tt)); end
 
 colorbar;
 % clim = min(abs(caxis));
