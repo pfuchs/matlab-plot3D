@@ -3,6 +3,8 @@ function im = plot3D(Data, Mask, options)
 % automatically crops the image domain to the mask and plots mosaic or
 % midplane orientations depending on the inputs given.
 %
+% Also allows maximum intensity projections through the plot type "mip3"
+%
 % Example
 %   [X,Y,Z] = ndgrid(-10:10);
 %   R = (X.^2 + Y.^2 + (Z+4).^2);
@@ -19,7 +21,8 @@ function im = plot3D(Data, Mask, options)
 arguments
     Data (:,:,:,:) double {mustBeNumeric}
     Mask (:,:,:,:) double {mustBeNumeric} = ones(size(Data))
-    options.Type (1,1) string = "mosaic"
+    options.Type (1,1) string {mustBeMember(options.Type, ...
+              ["mosaic","square","line","stack","mid3","mip3"])} = "mosaic"
     options.Crop (1,1) logical = true
 end
 
@@ -37,12 +40,15 @@ end
 
 %% Extract image mosaic
 switch options.Type
-    case {'line','stack','square', 'mid3'}
+    case {"line", "stack", "square", "mid3"}
         imMat = mid3(Data, options.Type);
         mskMat = mid3(Mask, options.Type);
-    case {'mosaic'}
+    case {"mosaic"}
         imMat = mosaic(Data);
         mskMat = mosaic(Mask);
+    case {"mip3"}
+        imMat = mip3(Data);
+        mskMat = mip3(Mask);
     otherwise
         error('No valid image type given.')
 end
@@ -81,15 +87,15 @@ zy = flipud(permute(Data(ceil(end/2),:,:), [3 2 1]));
 
 % Combine them into a tiled mosaic
 switch lower(type)
-    case('line')
+    case {'line'}
         ndz = sz(2) - sz(3);
         nxy = sz(1) + sz(2);
         mosaic = [xy, [nan(floor(ndz/2),nxy); ...
                        [xz, zy]; ...
                        nan(ceil(ndz/2),nxy)]];
-    case('square')
+    case {'square', 'mid3'}
         mosaic = [[xy; xz], [nan(sz(2),sz(2)); zy]];
-    case('stack')
+    case {'stack'}
         ndx = sz(2) - sz(1);
         nyz = sz(2) + sz(3);
         mosaic = [[nan(nyz,floor(ndx/2)),[xy;xz], nan(nyz,ceil(ndx/2))];...
@@ -135,4 +141,20 @@ for iz=0:(nz-1)
 end
 
 mosaic = mosaic';
+end
+
+function mosaic = mip3(Data)
+% Create mosaic of the maximum intensity projections of the data in
+% xy/xz/zy planes
+
+sz = size(Data);
+
+% Extract maximum intensity projections in the right orientation
+xy = flipud(permute(max(Data,[],3), [2 1 3]));
+xz = flipud(permute(max(Data,[],2), [3 1 2]));
+zy = flipud(permute(max(Data,[],1), [3 2 1]));
+
+% Combine them into a tiled mosaic
+mosaic = [[xy; xz], [nan(sz(2),sz(2)); zy]];
+
 end
