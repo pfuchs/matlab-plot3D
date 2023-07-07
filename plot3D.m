@@ -25,35 +25,40 @@ arguments
               ["mosaic","square","line","stack","mid3","mip3"])} = "mosaic"
     options.Crop (1,1) logical = true
     options.FigHandle (1,1) = 1
+    options.caxis = 'auto'
 end
 
-figure(FigHandle)
+figure(options.FigHandle);
+tcl = tiledlayout('flow','TileSpacing','compact', 'Padding', 'loose');
+
+for tt = 1:size(Data,4)
 %% Preprocessing
 if options.Crop
-    bbox = floor(getfield(regionprops3(Mask ~=0 ,'BoundingBox'),'BoundingBox'));
+    bbox = floor(getfield(regionprops3(Mask(:,:,:,tt) ~=0 ,'BoundingBox'),'BoundingBox'));
     bboxIdx = substruct('()',{bbox(1,2)+(1:bbox(1,5)), ...
                               bbox(1,1)+(1:bbox(1,4)), ...
-                              bbox(1,3)+(1:bbox(1,6))});
+                              bbox(1,3)+(1:bbox(1,6)), ...
+                              tt});
     
-    Data = subsref(Data, bboxIdx);
-    Mask = subsref(Mask, bboxIdx);
+    PlotData = subsref(Data, bboxIdx);
+    PlotMask = subsref(Mask, bboxIdx);
 end
 
 %% Extract image mosaic
 switch options.Type
     case {"line", "stack", "square", "mid3"}
-        imMat = mid3(Data, options.Type);
-        mskMat = mid3(Mask, options.Type);
+        imMat = mid3(PlotData, options.Type);
+        mskMat = mid3(PlotMask, options.Type);
     case {"mosaic"}
-        imMat = mosaic(Data);
-        mskMat = mosaic(Mask);
+        imMat = mosaic(PlotData);
+        mskMat = mosaic(PlotMask);
     case {"mip3"}
-        imMat = mip3(Data);
-        mskMat = mip3(Mask);
+        imMat = mip3(PlotData);
+        mskMat = mip3(PlotMask);
     otherwise
         error('No valid image type given.')
 end
-
+nexttile;
 im = image(imMat, 'CDataMapping', 'scaled'); 
 
 im.AlphaData = mskMat;
@@ -62,12 +67,14 @@ im.Parent.Box = 'off';
  
 axis image off;
 colormap(gray);
+title(sprintf('Echo %i',tt));
 
 colorbar;
 % clim = min(abs(caxis));
-% caxis([-clim, clim]);
+caxis(options.caxis);
+end
 
-title(inputname(1))
+title(tcl, inputname(1))
 
 end
 
