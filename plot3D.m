@@ -24,15 +24,16 @@ arguments
     options.Type (1,1) string {mustBeMember(options.Type, ...
               ["mosaic","square","line","stack","mid3","mip3"])} = "mosaic"
     options.Crop (1,1) logical = true
+    options.FigHandle (1,1) = 1
 end
 
-
+figure(FigHandle)
 %% Preprocessing
 if options.Crop
-    bbox = floor(getfield(regionprops3((Mask ~=0 ),'BoundingBox'),'BoundingBox'));
-    bboxIdx = substruct('()',{bbox(2)+(1:bbox(5)), ...
-                              bbox(1)+(1:bbox(4)), ...
-                              bbox(3)+(1:bbox(6))});
+    bbox = floor(getfield(regionprops3(Mask ~=0 ,'BoundingBox'),'BoundingBox'));
+    bboxIdx = substruct('()',{bbox(1,2)+(1:bbox(1,5)), ...
+                              bbox(1,1)+(1:bbox(1,4)), ...
+                              bbox(1,3)+(1:bbox(1,6))});
     
     Data = subsref(Data, bboxIdx);
     Mask = subsref(Mask, bboxIdx);
