@@ -9,6 +9,8 @@ function [fig, im] = plot3D(Data, Mask, options)
 % Image handle's "CData" and "AlphaMap" fields. This will be an array of
 % Images for 4D datasets.
 %
+% Code has been verified to work with MATLAB versions
+%       '9.14.0.2206163 (R2023a)' & '9.10.0.2015706 (R2021a) Update 7'
 %
 % Example
 %   [X,Y,Z] = ndgrid(-10:10);
@@ -23,7 +25,7 @@ function [fig, im] = plot3D(Data, Mask, options)
 % see also IMAGE, IMAGESC, REGIONPROPS3, ALPHA
 
 %% Input validation and defaults
-arguments (Input)
+arguments %(Input)
     Data (:,:,:,:) double {mustBeNumeric}
     Mask (:,:,:,:) double {mustBeNumeric} = ones(size(Data))
     options.Type (1,1) string {mustBeMember(options.Type, ...
@@ -32,12 +34,17 @@ arguments (Input)
     options.Labels (1,1) logical = false
     options.FigHandle (1,1) = 1
     options.caxis = 'auto'
+    options.Location (1,:) char {mustBeMember(options.Location, ...
+                                 ['north','south','east','west'])} = 'east'
+    options.Label (1,1) string = ""
 end
 
-arguments (Output)
-    fig matlab.ui.Figure
-    im (1,:) matlab.graphics.primitive.Image
-end
+% arguments (Output) % Doesn't work with older versiions of MATLAB
+%     fig matlab.ui.Figure
+%     im (1,:) matlab.graphics.primitive.Image
+% end
+
+im = repmat(image(0),1,size(Data,4));
 
 fig = figure(options.FigHandle);
 tcl = tiledlayout('flow','TileSpacing','compact', 'Padding', 'loose');
@@ -80,9 +87,9 @@ end
 
 %% Plot
 nexttile;
-im(tt) = image(imMat, 'CDataMapping', 'scaled'); 
+im(tt) = image(imMat, 'CDataMapping', 'scaled',...
+                      'AlphaData', mskMat); 
 
-im(tt).AlphaData = mskMat;
 im(tt).Parent.Color = 'none';
 im(tt).Parent.Box = 'off';
 
@@ -137,9 +144,10 @@ axis image off;
 colormap(gray);
 if ndims(Data)>3; title(sprintf('Echo %i',tt)); end
 
-colorbar;
-% clim = min(abs(caxis));
-caxis(options.caxis);
+c = colorbar(im(tt).Parent, 'Location', [options.Location 'outside']);
+c.Label.String = options.Label;
+
+caxis(im(tt).Parent, options.caxis); %#ok<CAXIS> % Kept as caxis for backwards compatibility
 end
 
 title(tcl, inputname(1))
