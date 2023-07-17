@@ -1,9 +1,14 @@
-function im = plot3D(Data, Mask, options)
+function [fig, im] = plot3D(Data, Mask, options)
 % Plotting function inspired by "im" from Jeff Fesslers MIRT toolbox
 % automatically crops the image domain to the mask and plots mosaic or
 % midplane orientations depending on the inputs given.
 %
 % Also allows maximum intensity projections through the plot type "mip3"
+%
+% To access the plotted image data matrix and alpha map use the returned
+% Image handle's "CData" and "AlphaMap" fields. This will be an array of
+% Images for 4D datasets.
+%
 %
 % Example
 %   [X,Y,Z] = ndgrid(-10:10);
@@ -18,7 +23,7 @@ function im = plot3D(Data, Mask, options)
 % see also IMAGE, IMAGESC, REGIONPROPS3, ALPHA
 
 %% Input validation and defaults
-arguments
+arguments (Input)
     Data (:,:,:,:) double {mustBeNumeric}
     Mask (:,:,:,:) double {mustBeNumeric} = ones(size(Data))
     options.Type (1,1) string {mustBeMember(options.Type, ...
@@ -29,7 +34,12 @@ arguments
     options.caxis = 'auto'
 end
 
-figure(options.FigHandle);
+arguments (Output)
+    fig matlab.ui.Figure
+    im (1,:) matlab.graphics.primitive.Image
+end
+
+fig = figure(options.FigHandle);
 tcl = tiledlayout('flow','TileSpacing','compact', 'Padding', 'loose');
 
 for tt = 1:size(Data,4)
@@ -70,11 +80,11 @@ end
 
 %% Plot
 nexttile;
-im = image(imMat, 'CDataMapping', 'scaled'); 
+im(tt) = image(imMat, 'CDataMapping', 'scaled'); 
 
-im.AlphaData = mskMat;
-im.Parent.Color = 'none';
-im.Parent.Box = 'off';
+im(tt).AlphaData = mskMat;
+im(tt).Parent.Color = 'none';
+im(tt).Parent.Box = 'off';
 
 
 %% Add labels
