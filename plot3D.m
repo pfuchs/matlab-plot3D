@@ -3,6 +3,17 @@ function [fig, im] = plot3D(Data, Mask, options)
 % automatically crops the image domain to the mask and plots mosaic or
 % midplane orientations depending on the inputs given.
 %
+% PLOT3D(Volume) plots the 3D data in volume in a mosaic with a colorbar.
+% The plot will be titled by the variable name of "Volume"
+%
+% PLOT3D(Volume, mask) trims the content of volume to the mask boundaries, 
+% and plots the data in a mosaic, with transparent background.
+%
+% Options can be supplied in parameter/value pairs as
+%
+% PLOT3D(...,'PropertyName',PropertyValue,...) where valid property names
+% are type, crop, OrientationLabels, fighandle, caxis, location, label
+%
 % Also allows maximum intensity projections through the plot type "mip3"
 %
 % To access the plotted image data matrix and alpha map use the returned
@@ -31,12 +42,13 @@ arguments %(Input)
     options.Type (1,1) string {mustBeMember(options.Type, ...
               ["mosaic","square","line","stack","mid3","mip3"])} = "mosaic"
     options.Crop (1,1) logical = true
-    options.Labels (1,1) logical = false
-    options.FigHandle (1,1) = 1
+    options.OrientationLabels (1,1) logical = false
+    options.FigHandle (1,1) = gcf
     options.caxis = 'auto'
     options.Location (1,:) char {mustBeMember(options.Location, ...
                                  ['north','south','east','west'])} = 'east'
     options.Label (1,1) string = ""
+    options.Slices (1,3) int8 = ceil(size(Data)/2)
 end
 
 % arguments (Output) % Doesn't work with older versiions of MATLAB
@@ -46,8 +58,13 @@ end
 
 im = repmat(image(0),1,size(Data,4));
 
-fig = figure(options.FigHandle);
-tcl = tiledlayout('flow','TileSpacing','compact', 'Padding', 'loose');
+if isa(options.FigHandle,'matlab.graphics.axis.Axes')
+    fig = options.FigHandle; 
+    tcl = fig;
+else
+    fig = figure(options.FigHandle);
+    tcl = tiledlayout(fig,'flow','TileSpacing','compact', 'Padding', 'loose');
+end
 
 for tt = 1:size(Data,4)
 %% Preprocessing
@@ -73,8 +90,8 @@ end
 %% Extract image mosaic
 switch options.Type
     case {"line", "stack", "square", "mid3"}
-        imMat = mid3(PlotData, options.Type);
-        mskMat = mid3(PlotMask, options.Type);
+        imMat = mid3(PlotData, options.Type, options.Slices);
+        mskMat = mid3(PlotMask, options.Type, options.Slices);
     case {"mosaic"}
         imMat = mosaic(PlotData);
         mskMat = mosaic(PlotMask);
@@ -86,7 +103,7 @@ switch options.Type
 end
 
 %% Plot
-nexttile;
+if ~isa(fig,'matlab.graphics.axis.Axes'); nexttile; end
 im(tt) = image(imMat, 'CDataMapping', 'scaled',...
                       'AlphaData', mskMat); 
 
@@ -95,7 +112,7 @@ im(tt).Parent.Box = 'off';
 
 
 %% Add labels
-if options.Labels
+if options.OrientationLabels
     sz = size(PlotData);
     pltsz = size(imMat);
     switch lower(options.Type)
@@ -158,16 +175,20 @@ function mosaic = mid3(Data, varargin)
 % Create mosaic of midplanes in xy/xz/zy axis.
 
 type = 'square';
+slices = ceil(size(Data)/2);
 if nargin>1
     type = varargin{1};
+end
+if nargin>2
+    slices = varargin{2};
 end
 
 sz = size(Data);
 
 % Extract midplanes in the right orientation
-xy = flipud(permute(Data(:,:,ceil(end/2)), [2 1 3]));
-xz = flipud(permute(Data(:,ceil(end/2),:), [3 1 2]));
-zy = flipud(permute(Data(ceil(end/2),:,:), [3 2 1]));
+xy = flipud(permute(Data(:,:,slices(3)), [2 1 3]));
+xz = flipud(permute(Data(:,slices(2),:), [3 1 2]));
+zy = flipud(permute(Data(slices(1),:,:), [3 2 1]));
 
 % Combine them into a tiled mosaic
 switch lower(type)
